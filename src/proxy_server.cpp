@@ -138,7 +138,14 @@ ProxyServer::ProxyServer(asio::io_context& ctx, ServerConfig cfg, RoutingTable& 
       acceptor_(strand_) {
     const tcp::endpoint ep(tcp::v4(), cfg_.port);
     acceptor_.open(ep.protocol());
+#ifdef _WIN32
+    // На Windows SO_REUSEADDR позволяет второму процессу занять тот же порт;
+    // SO_EXCLUSIVEADDRUSE гарантирует ошибку "порт занят", как на POSIX.
+    using exclusive_address_use = asio::detail::socket_option::boolean<SOL_SOCKET, SO_EXCLUSIVEADDRUSE>;
+    acceptor_.set_option(exclusive_address_use(true));
+#else
     acceptor_.set_option(tcp::acceptor::reuse_address(true));
+#endif
     acceptor_.bind(ep);
     acceptor_.listen(asio::socket_base::max_listen_connections);
 }

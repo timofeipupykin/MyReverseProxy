@@ -14,7 +14,7 @@ option(PROXY_BUILD_TESTS "Build unit tests" ON)
 option(PROXY_SANITIZERS  "Enable ASan+UBSan" OFF)
 
 # Boost.Asio - header-only, нужен Boost >= 1.80 (asio::awaitable, awaitable_operators)
-find_package(Boost 1.80 REQUIRED)
+find_package(Boost 1.80 CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
 add_library(proxy_core STATIC
@@ -30,6 +30,17 @@ add_library(proxy_core STATIC
 target_include_directories(proxy_core PUBLIC include)
 target_link_libraries(proxy_core PUBLIC Boost::headers Threads::Threads)
 target_compile_definitions(proxy_core PUBLIC BOOST_ASIO_NO_DEPRECATED)
+
+# Windows: Asio нужны WinSock-библиотеки и целевая версия ОС (Windows 10+).
+if(WIN32)
+  target_link_libraries(proxy_core PUBLIC ws2_32 mswsock)
+  target_compile_definitions(proxy_core PUBLIC _WIN32_WINNT=0x0A00 WIN32_LEAN_AND_MEAN NOMINMAX)
+endif()
+
+# MinGW + libstdc++: вывод std::print/std::println в консоль Windows живёт в libstdc++exp.
+if(MINGW)
+  target_link_libraries(proxy_core PUBLIC stdc++exp)
+endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(proxy_core PUBLIC -Wall -Wextra -Wpedantic)

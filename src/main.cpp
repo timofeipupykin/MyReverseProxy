@@ -71,7 +71,7 @@ std::expected<Options, std::string> parse_args(int argc, char** argv) {
 }
 
 // SIGINT/SIGTERM -> graceful shutdown, SIGHUP -> горячая перезагрузка списка бэкендов.
-asio::awaitable<void> signal_loop(proxy::RoutingTable& table, std::filesystem::path config,
+asio::awaitable<void> signal_loop([[maybe_unused]] proxy::RoutingTable& table, [[maybe_unused]] std::filesystem::path config,
                                   std::atomic_flag& quit) {
     asio::signal_set signals(co_await asio::this_coro::executor, SIGINT, SIGTERM);
 #ifdef SIGHUP

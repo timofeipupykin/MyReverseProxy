@@ -18,6 +18,19 @@ for p in 9001 9002 9003; do python3 -m http.server $p --directory /tmp >/dev/nul
 curl -i http://127.0.0.1:8080/
 ```
 
+### Windows (MSYS2 UCRT64)
+```powershell
+C:\msys64\usr\bin\pacman.exe -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-boost
+$env:PATH = "C:\msys64\ucrt64\bin;$env:PATH"
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+ctest --test-dir build --output-on-failure
+
+foreach ($p in 9001,9002,9003) { Start-Process python -ArgumentList '-m','http.server',$p -WindowStyle Hidden }
+.\build\async_proxy.exe --port 8080 --config config/backends.conf --algo rr --threads 4
+```
+На Windows нет SIGHUP, поэтому горячая перезагрузка конфига там недоступна.
+
 Параметры: `--port`, `--threads`, `--config`, `--algo rr|lc`.
 
 - `Ctrl+C` / `SIGTERM` — мягкая остановка.
